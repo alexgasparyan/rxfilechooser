@@ -71,10 +71,10 @@ public class MainActivity extends AppCompatActivity {
                     .takePhoto()
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(content -> imageView.setImageBitmap(content.getImage())), throwable ->{
+                    .subscribe(content -> imageView.setImageBitmap(content.getImage()), throwable ->{
                         throwable.printStackTrace();
                         Toast.makeText(this, throwable.getMessage(), Toast.LENGTH_LONG).show();
-                    };
+                    });
 
     }
 }
