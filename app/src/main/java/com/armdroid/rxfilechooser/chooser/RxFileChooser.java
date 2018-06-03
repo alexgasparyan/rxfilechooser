@@ -109,21 +109,21 @@ public class RxFileChooser {
                 .flatMap(fileContent -> Observable.just(((AudioContent) fileContent)));
     }
 
-    public Observable<ImageContent> openChooserForImage() {
+    public Observable<ImageContent> openChooserForImage(boolean justFromGallery) {
         String[] permissions = {
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 Manifest.permission.CAMERA};
-        return mFileChooser.startAction(permissions, OPEN_CHOOSER_IMAGE, false)
+        return mFileChooser.startAction(permissions, OPEN_CHOOSER_IMAGE, justFromGallery)
                 .flatMap(fileContent -> Observable.just(((ImageContent) fileContent)));
     }
 
-    public Observable<VideoContent> openChooserForVideo() {
+    public Observable<VideoContent> openChooserForVideo(boolean justFromGallery) {
         String[] permissions = {
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 Manifest.permission.CAMERA};
-        return mFileChooser.startAction(permissions, OPEN_CHOOSER_VIDEO, false)
+        return mFileChooser.startAction(permissions, OPEN_CHOOSER_VIDEO, justFromGallery)
                 .flatMap(fileContent -> Observable.just(((VideoContent) fileContent)));
     }
 

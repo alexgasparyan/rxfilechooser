@@ -23,10 +23,18 @@ Extremely simple, lightweight library for choosing files from android device.
 
 A sample project is attached to library where all the features of library are used. You can also test devices and OS versions with this.
 
-Add dependency in app module gradle file:
-
+Add the following to app level gradle file:
 ```gradle
-implementation 'com.armdroid:rxfilechooser:1.0.0'
+repositories {
+    maven { 
+        url "https://jitpack.io" 
+    }
+```
+
+Add dependency in app module gradle file: <br />
+[![Download](https://api.bintray.com/packages/alexgasparyan1997/android/RxFileChooser/images/download.svg)](https://bintray.com/alexgasparyan1997/android/RxFileChooser/_latestVersion)
+```gradle
+implementation 'com.armdroid:rxfilechooser:x.y.z'
 ```
 
 To initialize the library add this code to `Application` class.

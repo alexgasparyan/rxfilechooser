@@ -18,6 +18,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.content.FileProvider;
 import android.webkit.MimeTypeMap;
 
+import com.armdroid.rxfilechooser.content.AudioContent;
 import com.armdroid.rxfilechooser.content.FileContent;
 import com.armdroid.rxfilechooser.content.ImageContent;
 import com.armdroid.rxfilechooser.content.VideoContent;
@@ -49,16 +50,16 @@ import static com.armdroid.rxfilechooser.exception.MissingDataException.TYPE_URI
 
 public class FileChooser {
 
-    protected static final int GET_IMAGE = 6233;
-    protected static final int GET_VIDEO = 6234;
-    protected static final int GET_FILE = 6235;
-    protected static final int GET_AUDIO = 6236;
-    protected static final int GET_IMAGE_VIDEO = 6237;
-    protected static final int TAKE_PHOTO = 6238;
-    protected static final int TAKE_VIDEO = 6239;
-    protected static final int RECORD_AUDIO = 6240;
-    protected static final int OPEN_CHOOSER_IMAGE = 6241;
-    protected static final int OPEN_CHOOSER_VIDEO = 6242;
+    protected static final int GET_IMAGE = 1;
+    protected static final int GET_VIDEO = 2;
+    protected static final int GET_FILE = 3;
+    protected static final int GET_AUDIO = 4;
+    protected static final int GET_IMAGE_VIDEO = 5;
+    protected static final int TAKE_PHOTO = 6;
+    protected static final int TAKE_VIDEO = 7;
+    protected static final int RECORD_AUDIO = 8;
+    protected static final int OPEN_CHOOSER_IMAGE = 9;
+    protected static final int OPEN_CHOOSER_VIDEO = 10;
 
     private final String TYPE_VIDEO = "video";
     private final String TYPE_IMAGE = "image";
@@ -76,7 +77,7 @@ public class FileChooser {
 
     private ArrayList<String> mFilePaths;
 
-    public FileChooser() {
+    protected FileChooser() {
         mFilePaths = new ArrayList<>();
     }
 
@@ -124,12 +125,15 @@ public class FileChooser {
             if (data == null && mUri == null) {
                 return Observable.error(new MissingDataException(TYPE_URI));
             } else {
-                Uri uri = this.mUri;
+                Uri uri = mUri;
                 if (data != null && data.getData() != null) {
                     uri = data.getData();
                 }
                 if (uri == null) {
                     return Observable.error(new MissingDataException(TYPE_URI));
+                }
+                if (mUri != null && !uri.equals(mUri)) {
+                    mFilePath = null;
                 }
                 String path = getFilePath(uri);
                 if (path == null) {
@@ -148,7 +152,7 @@ public class FileChooser {
                 if (mimeType.startsWith(TYPE_IMAGE)) {
                     return replyToImageResponse(path, uri, fileSize, data);
                 } else if (mimeType.startsWith(TYPE_AUDIO)) {
-                    return replyToVideoResponse(path, uri, fileSize);
+                    return replyToAudioResponse(path, uri, fileSize);
                 } else if (mimeType.startsWith(TYPE_VIDEO)) {
                     return replyToVideoResponse(path, uri, fileSize);
                 } else {
@@ -260,6 +264,11 @@ public class FileChooser {
     private Observable<FileContent> replyToImageResponse(String path, Uri uri, long fileSize, Intent data) {
         Bitmap bitmap = ImageUtils.getOrientedBitmap(mActivity, uri, path, data);
         return Observable.just(new ImageContent(path, uri, fileSize, bitmap));
+    }
+
+    private Observable<FileContent> replyToAudioResponse(String path, Uri uri, long fileSize) {
+        return Observable.just(new AudioContent(path, uri, fileSize, AudioVideoUtils.getDuration(path)));
+
     }
 
     private Observable<FileContent> replyToVideoResponse(String path, Uri uri, long fileSize) {
