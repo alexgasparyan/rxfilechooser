@@ -10,6 +10,8 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 
+import com.armdroid.rxfilechooser.request_helper.RequestHelper;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -20,7 +22,7 @@ import java.io.InputStream;
 
 public class UriUtils {
 
-    public static File saveFileFromUri(Context context, Uri uri) {
+    public static File saveFileFromUri(Context context, Uri uri, RequestHelper helper) {
         try {
             Cursor returnCursor = context.getContentResolver().query(uri, null, null, null, null);
             if (returnCursor == null) {
@@ -36,7 +38,8 @@ public class UriUtils {
             if (inputStream == null) {
                 return null;
             }
-            File newFile = new File(context.getFilesDir(), name);
+            helper.setUriAndPath(name);
+            File newFile = new File(helper.getFilePath());
             FileOutputStream outputStream = new FileOutputStream(newFile);
             byte[] buffer = new byte[8192];
             int bytesRead;
@@ -103,11 +106,7 @@ public class UriUtils {
         }
         // MediaStore (and general)
         else if ("content".equalsIgnoreCase(uri.getScheme())) {
-            String foundPath = getDataColumn(context, uri, null, null);
-            if (foundPath == null) {
-                foundPath = uri.getPath();
-            }
-            return foundPath;
+            return getDataColumn(context, uri, null, null);
         }
         // File
         else if ("file".equalsIgnoreCase(uri.getScheme())) {

@@ -1,6 +1,6 @@
 apply plugin: 'com.android.library'
 
-def publish_version = '1.0.4'
+def publish_version = '1.0.5'
 
 ext {
     PUBLISH_GROUP_ID = 'com.armdroid'
@@ -14,7 +14,7 @@ android {
     defaultConfig {
         minSdkVersion 17
         targetSdkVersion 27
-        versionCode 8
+        versionCode 6
         versionName publish_version
     }
     buildTypes {
