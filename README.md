@@ -68,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
         RxFileChooser.from(this)
                     .takePhoto()
                     .includeBitmap()
+                    .single()
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(content -> imageView.setImageBitmap(content.getImage())), throwable ->{
