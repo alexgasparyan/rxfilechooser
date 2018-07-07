@@ -44,7 +44,7 @@ public class GalleryImagesRequestHelper {
      *
      * @return an {@link Observable} containing list of files
      */
-    private Observable<List<ImageContent>> request() {
+    public Observable<List<ImageContent>> request() {
         List<ImageContent> imageContentList = new ArrayList<>();
         String[] projection = {MediaStore.Images.Media._ID, MediaStore.MediaColumns.DATA};
 
