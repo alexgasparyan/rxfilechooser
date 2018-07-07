@@ -8,6 +8,7 @@ import com.armdroid.rxfilechooser.request_helper.AudioRequestHelper;
 import com.armdroid.rxfilechooser.request_helper.CamcorderRequestHelper;
 import com.armdroid.rxfilechooser.request_helper.CameraRequestHelper;
 import com.armdroid.rxfilechooser.request_helper.FileRequestHelper;
+import com.armdroid.rxfilechooser.request_helper.GalleryImagesRequestHelper;
 import com.armdroid.rxfilechooser.request_helper.ImageChooserRequestHelper;
 import com.armdroid.rxfilechooser.request_helper.ImageRequestHelper;
 import com.armdroid.rxfilechooser.request_helper.ImageVideoRequestHelper;
@@ -152,6 +153,15 @@ public class RxFileChooser {
      */
     public VideoChooserRequestHelper openChooserForVideo() {
         return new VideoChooserRequestHelper(mFileChooser);
+    }
+
+    /**
+     * Complete action of getting images from gallery
+     *
+     * @return an instance of helper class
+     */
+    public GalleryImagesRequestHelper getGalleryImages() {
+        return new GalleryImagesRequestHelper(mFileChooser.getActivity());
     }
 
 }

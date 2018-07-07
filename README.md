@@ -8,14 +8,15 @@ Extremely simple, lightweight library for choosing files from android device.
 **Choose:**
 * Image, video or both by opening a chooser (from internal storage, cloud, gallery or camera)
 * Audio files (from internal storage or audio recorder)
-* Any kind of file from internal storage or cloud
+* Any kind of file from internal storage or cloud]
+* List of all images in gallery (MediaStore.Images)
 
 **Advantages:**
 * Universal code for all android versions and devices
 * Easy to use
 * Permission handling set in library using RxPermissions library (https://github.com/tbruyelle/RxPermissions)
 * Rich info when file is chosen (name, size, path, uri, duration (for audio and video), bitmap (for image and video))
-* `minSdkVersion 19` (Android 4.4 KitKat)
+* `minSdkVersion 17` (Android 4.2 Jelly Bean)
 * Support for both fragment and activity
 
 
@@ -68,12 +69,15 @@ public class MainActivity extends AppCompatActivity {
         RxFileChooser.from(this)
                     .takePhoto()
                     .includeBitmap()
+                    .single()
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(content -> imageView.setImageBitmap(content.getImage())), throwable ->{
+                    .subscribe(content -> {
+                        imageView.setImageBitmap(content.getImage());
+                    }, throwable ->{
                         throwable.printStackTrace();
                         Toast.makeText(this, throwable.getMessage(), Toast.LENGTH_LONG).show();
-                    };
+                    });
 
     }
 }

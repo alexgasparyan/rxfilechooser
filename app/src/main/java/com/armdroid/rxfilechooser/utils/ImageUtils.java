@@ -10,12 +10,17 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.annotation.Nullable;
 
 import java.io.IOException;
 
 public class ImageUtils {
 
-    public static Bitmap getOrientedBitmap(Context context, final Uri uri, final String pImagePath, Intent intent) {
+    public static Bitmap getOrientedBitmap(Context context, final Uri uri, final String pImagePath) {
+        return getOrientedBitmap(context, uri, pImagePath, null);
+    }
+
+    public static Bitmap getOrientedBitmap(Context context, final Uri uri, final String pImagePath, @Nullable Intent intent) {
         Bitmap bitmap = getRawBitmap(context, pImagePath, uri);
         if (bitmap == null) {
             return null;
@@ -26,7 +31,7 @@ public class ImageUtils {
             matrix.postRotate(orientation);
             bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
         }
-        if (bitmap == null) {
+        if (bitmap == null && intent != null) {
             bitmap = getImageSecondOption(intent);
         }
         return bitmap;
