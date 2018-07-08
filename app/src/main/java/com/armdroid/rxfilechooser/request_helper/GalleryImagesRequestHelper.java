@@ -1,5 +1,6 @@
 package com.armdroid.rxfilechooser.request_helper;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
@@ -8,7 +9,9 @@ import android.net.Uri;
 import android.provider.MediaStore;
 
 import com.armdroid.rxfilechooser.content.ImageContent;
+import com.armdroid.rxfilechooser.exception.PermissionDeniedException;
 import com.armdroid.rxfilechooser.utils.ImageUtils;
+import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -21,9 +24,11 @@ public class GalleryImagesRequestHelper {
 
     private WeakReference<Activity> mActivity;
     private boolean mIncludeBitmap = false;
+    private RxPermissions mRxPermissions;
 
     public GalleryImagesRequestHelper(Activity activity) {
-        this.mActivity = new WeakReference<>(activity);
+        mActivity = new WeakReference<>(activity);
+        mRxPermissions = new RxPermissions(activity);
     }
 
     /**
@@ -45,6 +50,17 @@ public class GalleryImagesRequestHelper {
      * @return an {@link Observable} containing list of files
      */
     public Observable<List<ImageContent>> request() {
+        return mRxPermissions.requestEach(Manifest.permission.READ_EXTERNAL_STORAGE)
+                .flatMap(permission -> {
+                    if (!permission.granted) {
+                        return Observable.error(new PermissionDeniedException(permission));
+                    }
+                    return Observable.just(permission);
+                })
+                .flatMap(permission -> getGalleryImages());
+    }
+
+    private Observable<List<ImageContent>> getGalleryImages() {
         List<ImageContent> imageContentList = new ArrayList<>();
         String[] projection = {MediaStore.Images.Media._ID, MediaStore.MediaColumns.DATA};
 
@@ -77,7 +93,10 @@ public class GalleryImagesRequestHelper {
     }
 
     private <T> Observable<T> getCleanableObservable(T data) {
-        return Observable.just(data).doOnComplete(() -> mActivity = null);
+        return Observable.just(data).doOnComplete(() -> {
+            mActivity = null;
+            mRxPermissions = null;
+        });
     }
 
 }

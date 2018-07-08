@@ -1,4 +1,4 @@
-package com.armdroid.rxfilechooser;
+package com.armdroid.rxfilechooser.request_helper;
 
 import android.app.Activity;
 import android.content.ClipData;
@@ -7,11 +7,10 @@ import android.graphics.Bitmap;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Pair;
 
-import com.armdroid.rxfilechooser.request_helper.ImageVideoRequestHelper;
-import com.armdroid.rxfilechooser.request_helper.RequestHelper;
 import com.armdroid.rxfilechooser.content.AudioContent;
 import com.armdroid.rxfilechooser.content.FileContent;
 import com.armdroid.rxfilechooser.content.ImageContent;
@@ -21,10 +20,12 @@ import com.armdroid.rxfilechooser.exception.MissingDataException;
 import com.armdroid.rxfilechooser.exception.PermissionDeniedException;
 import com.armdroid.rxfilechooser.exception.WrongFileTypeException;
 import com.armdroid.rxfilechooser.utils.AudioVideoUtils;
+import com.armdroid.rxfilechooser.utils.FileUtils;
 import com.armdroid.rxfilechooser.utils.ImageUtils;
 import com.armdroid.rxfilechooser.utils.UriUtils;
 import com.tbruyelle.rxpermissions2.Permission;
 import com.tbruyelle.rxpermissions2.RxPermissions;
+import com.yalantis.ucrop.UCrop;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -44,6 +45,7 @@ public class FileChooser {
     private WeakReference<Activity> mActivity;
     private WeakReference<Fragment> mFragment;
     private RequestHelper mRequestHelper;
+    private boolean mEligibleForDelete;
 
     public void setActivity(Activity activity) {
         mActivity = new WeakReference<>(activity);
@@ -66,6 +68,10 @@ public class FileChooser {
         return checkPermissions(requestHelper.getPermissions())
                 .flatMap(perms -> setRxActivityResult(requestHelper.getMultipleIntent()))
                 .flatMap(this::onActivityMultipleResult)
+                .flatMapIterable(list -> list)
+                .concatMap(this::crop)
+                .toList()
+                .toObservable()
                 .doOnComplete(this::cleanSession);
     }
 
@@ -75,10 +81,30 @@ public class FileChooser {
         return checkPermissions(requestHelper.getPermissions())
                 .flatMap(perms -> setRxActivityResult(requestHelper.getIntent()))
                 .flatMap(this::onActivityResult)
+                .flatMap(this::crop)
                 .doOnComplete(this::cleanSession);
 
     }
 
+    private Observable<FileContent> crop(FileContent fileContent) {
+        if (fileContent instanceof ImageContent && mRequestHelper.mDoCrop) {
+            mRequestHelper.mInternalReturnBitmap = true;
+            mRequestHelper.setupMediaFile(MediaStore.ACTION_IMAGE_CAPTURE);
+            UCrop ucrop = UCrop.of(fileContent.getUri(), Uri.fromFile(new File(mRequestHelper.mFilePath)));
+            if (mRequestHelper.mCropOptions != null) {
+                ucrop.withOptions(mRequestHelper.mCropOptions);
+            }
+            return setRxActivityResult(ucrop.getIntent(getActivity()))
+                    .map(result -> {
+                        if (mEligibleForDelete) {
+                            FileUtils.delete(fileContent);
+                        }
+                        return result;
+                    })
+                    .flatMap(this::onCropActivityResult);
+        }
+        return Observable.just(fileContent);
+    }
 
     private Observable<Result> setRxActivityResult(Intent intent) {
         if (mFragment != null) {
@@ -93,7 +119,7 @@ public class FileChooser {
 
     private Observable<FileContent> onActivityResult(Result result) throws Exception {
         int resultCode = result.resultCode();
-        Uri requestUri = mRequestHelper.getUri();
+        Uri requestUri = mRequestHelper.mUri;
         Intent data = result.data();
 
         if (resultCode == Activity.RESULT_OK) {
@@ -103,12 +129,14 @@ public class FileChooser {
                 Uri uri = requestUri;
                 if (data != null && data.getData() != null) {
                     uri = data.getData();
+                } else {
+                    mEligibleForDelete = true;
                 }
                 if (uri == null) {
                     throw new MissingDataException(TYPE_URI);
                 }
                 if (requestUri != null && !uri.equals(requestUri)) {
-                    mRequestHelper.setFilePath(null);
+                    mRequestHelper.mFilePath = null;
                 }
                 return Observable.just(getContentFromUri(uri, data));
             }
@@ -116,7 +144,6 @@ public class FileChooser {
             throw new FilePickCanceledException("Could not receive any file");
         }
     }
-
 
     private Observable<List<FileContent>> onActivityMultipleResult(Result result) throws Exception {
         int resultCode = result.resultCode();
@@ -131,8 +158,8 @@ public class FileChooser {
                     int selectedCount = clipData.getItemCount();
                     for (int i = 0; i < selectedCount; i++) {
                         contents.add(getContentFromUri(clipData.getItemAt(i).getUri(), data));
-                        mRequestHelper.setUri(null);
-                        mRequestHelper.setFilePath(null);
+                        mRequestHelper.mUri = null;
+                        mRequestHelper.mFilePath = null;
                     }
                 } else {
                     contents.add(getContentFromUri(data.getData(), data));
@@ -145,8 +172,19 @@ public class FileChooser {
 
     }
 
-    private FileContent getContentFromUri(Uri uri, Intent data) throws Exception {
-        Pair<Uri, String> pair = setFilePath(uri);
+    private Observable<FileContent> onCropActivityResult(Result result) throws Exception {
+        int resultCode = result.resultCode();
+        if (resultCode == Activity.RESULT_OK) {
+            return Observable.just(getContentFromUri(UCrop.getOutput(result.data()), null));
+        } else if (resultCode == UCrop.RESULT_ERROR) {
+            return Observable.error(UCrop.getError(result.data()));
+        } else {
+            return Observable.error(new FilePickCanceledException("Could not receive any file"));
+        }
+    }
+
+    private FileContent getContentFromUri(Uri uri, @Nullable Intent data) throws Exception {
+        Pair<Uri, String> pair = finalizePathAndUri(uri);
         if (pair == null) {
             throw new MissingDataException(TYPE_PATH);
         }
@@ -167,7 +205,7 @@ public class FileChooser {
     }
 
     private String getMimeType(String path, Uri uri) throws WrongFileTypeException {
-        String mimeType = mRequestHelper.getMimeType(path, uri);
+        String mimeType = FileUtils.getMimeType(getActivity(), path, uri);
         if (mimeType == null) {
             throw new WrongFileTypeException("Mime type of the file is missing");
         }
@@ -179,7 +217,10 @@ public class FileChooser {
     }
 
     private boolean isDesiredMimeType(String currentType) {
-        if (mRequestHelper instanceof ImageVideoRequestHelper) {
+        if (mRequestHelper instanceof FileRequestHelper &&
+                ((FileRequestHelper) mRequestHelper).mMimeTypes != null) {
+            return ((FileRequestHelper) mRequestHelper).mMimeTypes.contains(currentType);
+        } else if (mRequestHelper instanceof ImageVideoRequestHelper) {
             return currentType.startsWith("image") || currentType.startsWith("video");
         }
         return currentType.startsWith(mRequestHelper.getType());
@@ -197,8 +238,11 @@ public class FileChooser {
                 .toObservable();
     }
 
-    private FileContent getImageResponse(String path, Uri uri, long fileSize, Intent data) {
-        Bitmap bitmap = mRequestHelper.returnBitmap() ? ImageUtils.getOrientedBitmap(getActivity(), uri, path, data) : null;
+    private FileContent getImageResponse(String path, Uri uri, long fileSize, @Nullable Intent data) {
+        Bitmap bitmap = null;
+        if (mRequestHelper.mReturnBitmap && (!mRequestHelper.mDoCrop || mRequestHelper.mInternalReturnBitmap)) {
+            bitmap = ImageUtils.getOrientedBitmap(getActivity(), uri, path, data);
+        }
         return new ImageContent(path, uri, fileSize, bitmap);
     }
 
@@ -208,7 +252,7 @@ public class FileChooser {
     }
 
     private FileContent getVideoResponse(String path, Uri uri, long fileSize) {
-        Bitmap thumb = mRequestHelper.returnBitmap() ? ThumbnailUtils.createVideoThumbnail(path, MediaStore.Images.Thumbnails.MINI_KIND) : null;
+        Bitmap thumb = mRequestHelper.mReturnBitmap ? ThumbnailUtils.createVideoThumbnail(path, MediaStore.Images.Thumbnails.MINI_KIND) : null;
         return new VideoContent(path, uri, fileSize, thumb, AudioVideoUtils.getDuration(path));
 
     }
@@ -224,15 +268,14 @@ public class FileChooser {
         mRxPermissions = null;
     }
 
-    private Pair<Uri, String> setFilePath(Uri uri) {
-        String path = mRequestHelper.getFilePath() == null ? UriUtils.getRealPathFromUri(getActivity(), uri) : mRequestHelper.getFilePath();
+    private Pair<Uri, String> finalizePathAndUri(Uri uri) {
+        String path = mRequestHelper.mFilePath == null ? UriUtils.getRealPathFromUri(getActivity(), uri) : mRequestHelper.mFilePath;
         if (path == null) {
-            File file = UriUtils.saveFileFromUri(getActivity(), uri, mRequestHelper);
-            if (file == null) {
+            Pair<Uri, String> pair = UriUtils.saveFileFromUri(getActivity(), uri, mRequestHelper.mUseInternalStorage);
+            if (pair == null) {
                 return null;
             }
-            path = mRequestHelper.getFilePath();
-            uri = mRequestHelper.getUri();
+            return pair;
         }
         return Pair.create(uri, path);
     }

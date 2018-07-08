@@ -3,15 +3,15 @@ package com.armdroid.rxfilechooser.request_helper;
 import android.Manifest;
 import android.content.Intent;
 
-import com.armdroid.rxfilechooser.FileChooser;
 import com.armdroid.rxfilechooser.content.FileContent;
+import com.yalantis.ucrop.UCrop;
 
 import java.util.List;
 
 import io.reactivex.Observable;
 
 
-public class ImageVideoRequestHelper extends RequestHelper {
+public class ImageVideoRequestHelper extends RequestHelper<ImageVideoRequestHelper> {
 
     private boolean mFromGallery = true;
 
@@ -52,6 +52,29 @@ public class ImageVideoRequestHelper extends RequestHelper {
     }
 
     /**
+     * Crop image after choosing it (available for image).
+     *
+     * @return the same instance of {@link ImageVideoRequestHelper}
+     */
+    public ImageVideoRequestHelper crop() {
+        mDoCrop = true;
+        return this;
+    }
+
+    /**
+     * Crop image after choosing it with custom options such as UI of the crop page, crop aspect
+     * ratio, max or min sie of cropped image etc (available for image).
+     *
+     * @param cropOptions The options that are going to be used for crop session
+     * @return the same instance of {@link ImageVideoRequestHelper}
+     */
+    public ImageVideoRequestHelper crop(UCrop.Options cropOptions) {
+        mDoCrop = true;
+        mCropOptions = cropOptions;
+        return this;
+    }
+
+    /**
      * Choose single image or video file
      *
      * @return an {@link Observable} containing the file instance
@@ -75,14 +98,14 @@ public class ImageVideoRequestHelper extends RequestHelper {
     }
 
     @Override
-    public Intent getIntent() {
+    protected Intent getIntent() {
         Intent intent = new Intent(mFromGallery ? Intent.ACTION_PICK : Intent.ACTION_GET_CONTENT);
         intent.setType("image/* video/*");
         return intent;
     }
 
     @Override
-    public String[] getPermissions() {
+    protected String[] getPermissions() {
         return new String[] {Manifest.permission.READ_EXTERNAL_STORAGE};
     }
 

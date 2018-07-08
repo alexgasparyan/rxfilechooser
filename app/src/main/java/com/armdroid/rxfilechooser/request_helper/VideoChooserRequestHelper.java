@@ -9,7 +9,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.provider.MediaStore;
 
-import com.armdroid.rxfilechooser.FileChooser;
 import com.armdroid.rxfilechooser.content.VideoContent;
 
 import java.util.ArrayList;
@@ -18,7 +17,7 @@ import java.util.List;
 import io.reactivex.Observable;
 
 
-public class VideoChooserRequestHelper extends RequestHelper {
+public class VideoChooserRequestHelper extends RequestHelper<VideoChooserRequestHelper> {
 
     private boolean mFromGallery = true;
 
@@ -82,7 +81,7 @@ public class VideoChooserRequestHelper extends RequestHelper {
     }
 
     @Override
-    public Intent getIntent() {
+    protected Intent getIntent() {
         Activity activity = mFileChooser.getActivity();
 
         PackageManager pm = activity.getPackageManager();
@@ -113,7 +112,7 @@ public class VideoChooserRequestHelper extends RequestHelper {
     }
 
     @Override
-    public String[] getPermissions() {
+    protected String[] getPermissions() {
         return new String[]{
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -121,7 +120,7 @@ public class VideoChooserRequestHelper extends RequestHelper {
     }
 
     @Override
-    public String getType() {
+    protected String getType() {
         return "video";
     }
 }

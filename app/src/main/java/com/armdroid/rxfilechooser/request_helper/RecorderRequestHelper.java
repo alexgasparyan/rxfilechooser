@@ -4,13 +4,12 @@ import android.Manifest;
 import android.content.Intent;
 import android.provider.MediaStore;
 
-import com.armdroid.rxfilechooser.FileChooser;
 import com.armdroid.rxfilechooser.content.AudioContent;
 
 import io.reactivex.Observable;
 
 
-public class RecorderRequestHelper extends RequestHelper{
+public class RecorderRequestHelper extends RequestHelper<RecorderRequestHelper> {
 
     public RecorderRequestHelper(FileChooser mFileChooser) {
         super(mFileChooser);
@@ -27,14 +26,17 @@ public class RecorderRequestHelper extends RequestHelper{
     }
 
     @Override
-    public Intent getIntent() {
+    protected Intent getIntent() {
         Intent intent = new Intent(MediaStore.Audio.Media.RECORD_SOUND_ACTION);
         intent.putExtra(MediaStore.EXTRA_OUTPUT, mUri);
         return intent;
     }
 
     @Override
-    public String[] getPermissions() {
+    protected String[] getPermissions() {
+        if (mUseInternalStorage) {
+            return new String[]{Manifest.permission.RECORD_AUDIO};
+        }
         return new String[] {
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -42,7 +44,7 @@ public class RecorderRequestHelper extends RequestHelper{
     }
 
     @Override
-    public String getType() {
+    protected String getType() {
         return "audio";
     }
 }

@@ -9,8 +9,8 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.provider.MediaStore;
 
-import com.armdroid.rxfilechooser.FileChooser;
 import com.armdroid.rxfilechooser.content.ImageContent;
+import com.yalantis.ucrop.UCrop;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,7 @@ import java.util.List;
 import io.reactivex.Observable;
 
 
-public class ImageChooserRequestHelper extends RequestHelper {
+public class ImageChooserRequestHelper extends RequestHelper<ImageChooserRequestHelper> {
 
     private boolean mFromGallery = true;
 
@@ -57,6 +57,29 @@ public class ImageChooserRequestHelper extends RequestHelper {
     }
 
     /**
+     * Crop image after choosing it.
+     *
+     * @return the same instance of {@link ImageChooserRequestHelper}
+     */
+    public ImageChooserRequestHelper crop() {
+        mDoCrop = true;
+        return this;
+    }
+
+    /**
+     * Crop image after choosing it with custom options such as UI of the crop page, crop aspect
+     * ratio, max or min sie of cropped image etc.
+     *
+     * @param cropOptions The options that are going to be used for crop session
+     * @return the same instance of {@link ImageChooserRequestHelper}
+     */
+    public ImageChooserRequestHelper crop(UCrop.Options cropOptions) {
+        mDoCrop = true;
+        mCropOptions = cropOptions;
+        return this;
+    }
+
+    /**
      * Choose single image file
      *
      * @return an {@link Observable} containing the file instance
@@ -82,7 +105,7 @@ public class ImageChooserRequestHelper extends RequestHelper {
     }
 
     @Override
-    public Intent getIntent() {
+    protected Intent getIntent() {
         Activity activity = mFileChooser.getActivity();
 
         PackageManager pm = activity.getPackageManager();
@@ -113,7 +136,7 @@ public class ImageChooserRequestHelper extends RequestHelper {
     }
 
     @Override
-    public String[] getPermissions() {
+    protected String[] getPermissions() {
         return new String[]{
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -121,7 +144,7 @@ public class ImageChooserRequestHelper extends RequestHelper {
     }
 
     @Override
-    public String getType() {
+    protected String getType() {
         return "image";
     }
 }

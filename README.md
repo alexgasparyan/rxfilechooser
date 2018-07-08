@@ -15,8 +15,9 @@ Extremely simple, lightweight library for choosing files from android device.
 * Universal code for all android versions and devices
 * Easy to use
 * Permission handling set in library using RxPermissions library (https://github.com/tbruyelle/RxPermissions)
+* Available crop for images with various options using UCrop library (https://github.com/Yalantis/uCrop)
 * Rich info when file is chosen (name, size, path, uri, duration (for audio and video), bitmap (for image and video))
-* `minSdkVersion 17` (Android 4.2 Jelly Bean)
+* `minSdkVersion 19` (Android 4.4 Jelly Bean)
 * Support for both fragment and activity
 
 
@@ -68,13 +69,15 @@ public class MainActivity extends AppCompatActivity {
         ImageView imageView = findViewById(R.id.image_view);
         RxFileChooser.from(this)
                     .takePhoto()
+                    .useExternalStorage()
                     .includeBitmap()
+                    .crop()
                     .single()
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(content -> {
                         imageView.setImageBitmap(content.getImage());
-                    }, throwable ->{
+                    }, throwable -> {
                         throwable.printStackTrace();
                         Toast.makeText(this, throwable.getMessage(), Toast.LENGTH_LONG).show();
                     });
@@ -84,8 +87,45 @@ public class MainActivity extends AppCompatActivity {
 ```
 It is recommended that all actions are done in background thread (in some cases files are copied which can take some time)
 
+Besides various concrete actions, you can also pick specific files by providing list of desired mime types:
+```java
+public class MainActivity extends AppCompatActivity {
+    
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        
+        ImageView imageView = findViewById(R.id.image_view);
+        
+        //Customize crop
+        UCrop.Options options = new UCrop.Options();
+                options.withAspectRatio(4, 3);
+                options.setStatusBarColor(Color.BLACK);
+                options.setActiveWidgetColor(Color.GRAY);
+        RxFileChooser.from(this)
+                    .pickFile()
+                    .withMimeTypes("image/jpeg", "image/png")
+                    .useInternalStorage()
+                    .includeBitmap()
+                    .crop(options)
+                    .multiple()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(content -> {
+                        imageView.setImageBitmap(((ImageContent)content).getImage());
+                    }, throwable -> {
+                        throwable.printStackTrace();
+                        Toast.makeText(this, throwable.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+
+    }
+}
+```
+
 ## Note ##
 * Library does not guarantee that the chosen file has the type specified by user if chosen from third party cloud or internal storage apps (i.e. Google Drive, Dropbox, ES Explorer, Astro). Accordingly, library throws `WrongFileTypeException`.
+* In case actions is stopped, library throws `FilePickCanceledException`.
 * Library uses provider with authority name `{YOUR_PACKAGE_NAME}.fileProvider` (see merged manifest)
 
 ## Supported devices and OS

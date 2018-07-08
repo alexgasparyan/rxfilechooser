@@ -3,7 +3,6 @@ package com.armdroid.rxfilechooser.request_helper;
 import android.Manifest;
 import android.content.Intent;
 
-import com.armdroid.rxfilechooser.FileChooser;
 import com.armdroid.rxfilechooser.content.AudioContent;
 
 import java.util.List;
@@ -11,7 +10,7 @@ import java.util.List;
 import io.reactivex.Observable;
 
 
-public class AudioRequestHelper extends RequestHelper {
+public class AudioRequestHelper extends RequestHelper<AudioRequestHelper> {
 
     public AudioRequestHelper(FileChooser fileChooser) {
         super(fileChooser);
@@ -41,19 +40,19 @@ public class AudioRequestHelper extends RequestHelper {
     }
 
     @Override
-    public Intent getIntent() {
+    protected Intent getIntent() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("audio/*");
         return intent;
     }
 
     @Override
-    public String[] getPermissions() {
+    protected String[] getPermissions() {
         return new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
     }
 
     @Override
-    public String getType() {
+    protected String getType() {
         return "audio";
     }
 }

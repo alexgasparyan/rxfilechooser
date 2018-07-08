@@ -3,7 +3,6 @@ package com.armdroid.rxfilechooser.request_helper;
 import android.Manifest;
 import android.content.Intent;
 
-import com.armdroid.rxfilechooser.FileChooser;
 import com.armdroid.rxfilechooser.content.VideoContent;
 
 import java.util.List;
@@ -11,7 +10,7 @@ import java.util.List;
 import io.reactivex.Observable;
 
 
-public class VideoRequestHelper extends RequestHelper {
+public class VideoRequestHelper extends RequestHelper<VideoRequestHelper> {
 
     private boolean mFromGallery = true;
 
@@ -74,19 +73,19 @@ public class VideoRequestHelper extends RequestHelper {
     }
 
     @Override
-    public Intent getIntent() {
+    protected Intent getIntent() {
         Intent intent = new Intent(mFromGallery ? Intent.ACTION_PICK : Intent.ACTION_GET_CONTENT);
         intent.setType("video/*");
         return intent;
     }
 
     @Override
-    public String[] getPermissions() {
+    protected String[] getPermissions() {
         return new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
     }
 
     @Override
-    public String getType() {
+    protected String getType() {
         return "video";
     }
 }

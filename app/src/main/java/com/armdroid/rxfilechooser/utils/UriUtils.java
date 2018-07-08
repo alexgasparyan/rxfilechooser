@@ -9,27 +9,21 @@ import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
-
-import com.armdroid.rxfilechooser.request_helper.RequestHelper;
+import android.util.Pair;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
-/**
- * Created by Alex Gasparyan on 7/24/2017.
- */
-
 public class UriUtils {
 
-    public static File saveFileFromUri(Context context, Uri uri, RequestHelper helper) {
+    public static Pair<Uri, String> saveFileFromUri(Context context, Uri uri, boolean useInternalStorage) {
         try {
             Cursor returnCursor = context.getContentResolver().query(uri, null, null, null, null);
             if (returnCursor == null) {
                 return null;
             }
             int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-            //int sizeIndex = returnCursor.getColumnIndex(OpenableColumns.SIZE);
             String name = "";
             if (returnCursor.moveToFirst()) {
                 name = returnCursor.getString(nameIndex);
@@ -38,8 +32,11 @@ public class UriUtils {
             if (inputStream == null) {
                 return null;
             }
-            helper.setUriAndPath(name);
-            File newFile = new File(helper.getFilePath());
+            Pair<Uri, String> pair = FileUtils.getMediaFileFromName(context, name, useInternalStorage);
+            if (pair.first == null) {
+                return null;
+            }
+            File newFile = new File(pair.second);
             FileOutputStream outputStream = new FileOutputStream(newFile);
             byte[] buffer = new byte[8192];
             int bytesRead;
@@ -49,7 +46,7 @@ public class UriUtils {
             inputStream.close();
             outputStream.close();
             outputStream.flush();
-            return newFile;
+            return pair;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -115,7 +112,6 @@ public class UriUtils {
 
         return null;
     }
-
 
     private static String getDataColumn(Context context, Uri uri, String selection,
                                         String[] selectionArgs) {

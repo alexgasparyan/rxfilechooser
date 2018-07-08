@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import com.armdroid.rxfilechooser.request_helper.AudioRequestHelper;
 import com.armdroid.rxfilechooser.request_helper.CamcorderRequestHelper;
 import com.armdroid.rxfilechooser.request_helper.CameraRequestHelper;
+import com.armdroid.rxfilechooser.request_helper.FileChooser;
 import com.armdroid.rxfilechooser.request_helper.FileRequestHelper;
 import com.armdroid.rxfilechooser.request_helper.GalleryImagesRequestHelper;
 import com.armdroid.rxfilechooser.request_helper.ImageChooserRequestHelper;

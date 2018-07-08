@@ -5,13 +5,12 @@ import android.app.Activity;
 import android.content.Intent;
 import android.provider.MediaStore;
 
-import com.armdroid.rxfilechooser.FileChooser;
 import com.armdroid.rxfilechooser.content.VideoContent;
 
 import io.reactivex.Observable;
 
 
-public class CamcorderRequestHelper extends RequestHelper {
+public class CamcorderRequestHelper extends RequestHelper<CamcorderRequestHelper> {
 
     public CamcorderRequestHelper(FileChooser fileChooser) {
         super(fileChooser);
@@ -39,7 +38,7 @@ public class CamcorderRequestHelper extends RequestHelper {
     }
 
     @Override
-    public Intent getIntent() {
+    protected Intent getIntent() {
         Activity activity = mFileChooser.getActivity();
         setupMediaFile(MediaStore.ACTION_VIDEO_CAPTURE);
 
@@ -51,7 +50,10 @@ public class CamcorderRequestHelper extends RequestHelper {
     }
 
     @Override
-    public String[] getPermissions() {
+    protected String[] getPermissions() {
+        if (mUseInternalStorage) {
+            return new String[]{Manifest.permission.CAMERA};
+        }
         return new String[]{
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -59,7 +61,7 @@ public class CamcorderRequestHelper extends RequestHelper {
     }
 
     @Override
-    public String getType() {
+    protected String getType() {
         return "video";
     }
 }
