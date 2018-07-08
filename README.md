@@ -112,8 +112,8 @@ public class MainActivity extends AppCompatActivity {
                     .multiple()
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(content -> {
-                        imageView.setImageBitmap(((ImageContent)content).getImage());
+                    .subscribe(files -> {
+                        imageView.setImageBitmap(((ImageContent) files.get(0)).getImage());
                     }, throwable -> {
                         throwable.printStackTrace();
                         Toast.makeText(this, throwable.getMessage(), Toast.LENGTH_LONG).show();
