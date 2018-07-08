@@ -100,9 +100,10 @@ public class MainActivity extends AppCompatActivity {
         
         //Customize crop
         UCrop.Options options = new UCrop.Options();
-                options.withAspectRatio(4, 3);
-                options.setStatusBarColor(Color.BLACK);
-                options.setActiveWidgetColor(Color.GRAY);
+        options.withAspectRatio(4, 3);
+        options.setStatusBarColor(Color.BLACK);
+        options.setActiveWidgetColor(Color.GRAY);
+        
         RxFileChooser.from(this)
                     .pickFile()
                     .withMimeTypes("image/jpeg", "image/png")
